@@ -15,11 +15,19 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          fetch-depth: 0 # goreleaser needs the full history for the changelog
+          # goreleaser walks the commit graph (git describe to find the
+          # previous tag, git log for the changelog) but never reads the files
+          # of older commits: fetch every commit and tag without their blobs,
+          # and let the checkout fetch only those of the tag.
+          fetch-depth: 0
+          filter: blob:none
 
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
           go-version-file: go.mod
+          # Only tag pushes run this workflow, and a run for one tag can't
+          # restore a cache saved by a run for another: saving it is wasted time.
+          cache: false
 
       - uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
         with:
